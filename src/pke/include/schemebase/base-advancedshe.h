@@ -334,6 +334,20 @@ public:
     // Other Methods for Bootstrap
     //------------------------------------------------------------------------------
 
+    //------------------------------------------------------------------------------
+    // MATRIX MULTIPLICATION
+    //------------------------------------------------------------------------------
+    /**
+   * Function for multiplying two matrices represented as vectors of ciphertexts
+   * @param ciphertextVec1 the first matrix represented as a vector of ciphertexts
+   * @param ciphertextVec2 the second matrix represented as a vector of ciphertexts
+   * @param numCols the number of columns in the first matrix
+   * @return the resulting ciphertext
+   */
+    virtual Ciphertext<Element> EvalMatrixMult(ConstCiphertext<Element> ciphertextVec1, ConstCiphertext<Element> ciphertextVec2, usint numRows1) const {
+        OPENFHE_THROW("EvalMatrixMult is not implemented for the scheme.");
+    }
+
 protected:
     std::set<uint32_t> GenerateIndices_2n(usint batchSize, usint m) const;
 
