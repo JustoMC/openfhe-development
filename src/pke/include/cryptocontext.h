@@ -2850,6 +2850,24 @@ public:
    */
     Ciphertext<Element> EvalMerge(const std::vector<Ciphertext<Element>>& ciphertextVec) const;
 
+    /**
+     * Matrix multiplication of two ciphertexts. The first ciphertext is a matrix
+     * of size numRows1 x numCols1, and the second ciphertext is a matrix of size
+     * numRows2 x numCols2. The number of columns in the first matrix must be equal
+     * to the number of rows in the second matrix. The result is a matrix of size
+     * numRows1 x numCols2.
+     *
+     * @param ciphertext1 first matrix.
+     * @param ciphertext2 second matrix.
+     * @param numRows1 number of rows in the first matrix.
+     * @param numRows2 number of rows in the second matrix.
+     * @return resulting ciphertext
+     */
+    Ciphertext<Element> EvalMatrixMult(ConstCiphertext<Element> ciphertext1,
+                                       ConstCiphertext<Element> ciphertext2,
+                                       uint numRows1 = 0,
+                                       uint numRows2 = 0
+                                      ) const;
     //------------------------------------------------------------------------------
     // PRE Wrapper
     //------------------------------------------------------------------------------

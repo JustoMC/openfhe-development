@@ -402,6 +402,70 @@ Ciphertext<Element> AdvancedSHEBase<Element>::EvalMerge(const std::vector<Cipher
 }
 
 template <class Element>
+Ciphertext<Element> AdvancedSHEBase<Element>::EvalMatrixMult(ConstCiphertext<Element> ciphertext1,
+                                                             ConstCiphertext<Element> ciphertext2,
+                                                             usint numRows1,
+                                                             usint numRows2
+                                                            ) const {
+    if (ciphertext1->GetSlots() == 0 || ciphertext2->GetSlots() == 0) {
+        OPENFHE_THROW("the vectors of ciphertexts to be multiplied cannot be empty");
+    }
+    usint numCols1, numCols2;
+    if (numRows1 == 0) {
+        if (sqrt(ciphertext1->GetSlots()) != floor(sqrt(ciphertext1->GetSlots()))) {
+            OPENFHE_THROW("the number of rows of the first matrix must be specified");
+        }
+        numRows1 = uint(sqrt(ciphertext1->GetSlots()));
+        numCols1 = numRows1;
+    } else if (ciphertext1->GetSlots()%numRows1 != 0) {
+        OPENFHE_THROW("the number of columns of the first matrix must be a unsigned integer, this be calculated by the number of elements in the vector divided by the number of rows");
+    } else {
+        numCols1 = uint(ciphertext1->GetSlots()/numRows1);
+    }
+    if (numRows2 == 0) {
+        numRows2 = numCols1;
+    }
+    if (ciphertext2->GetSlots()%numRows2 != 0) {
+        OPENFHE_THROW("the number of columns of the second matrix must be a unsigned integer, this be calculated by the number of elements in the vector divided by the number of rows.");
+    } else {
+        numCols2 = uint(ciphertext2->GetSlots()/numRows2);
+    }
+    if (numCols1 != numRows2) {
+        OPENFHE_THROW("the number of columns of the first matrix must be equal to the number of rows of the second matrix");
+    }
+    if (numRows1*numCols2 > ciphertext1->GetCryptoContext()->GetRingDimension()/2) {
+        OPENFHE_THROW("the resulting matrix is too large to be encoded in this context");
+    }
+
+    // SOLO MATRICES CUADRADAS
+    if (numRows1 != numCols1 || numRows2 != numCols2)
+        OPENFHE_THROW("the matrices must be square (por ahora)");
+    // SOLO MATRICES CON LADO POTENCIA DE 2
+    if (pow(2, floor(log2(numRows1))) != numRows1)
+        OPENFHE_THROW("Number of sides must be a power of 2");
+    
+    auto cc = ciphertext1->GetCryptoContext();
+    if (ciphertext1->GetSlots() == 1 && ciphertext2->GetSlots() == 1) {
+        return cc->EvalMult(ciphertext1, ciphertext2);
+    } else {
+        #if true
+        
+        #else
+        OPENFHE_THROW("Under construction");
+        #endif
+
+        return nullptr;
+    }
+}
+std::vector<uint> vec_from_pred(uint n, bool (*pred)(int)) {
+    std::vector<uint> vec;
+    for (uint i = 0; i < n; i++) {
+        vec.push_back(pred(i) ? 1 : 0);
+    }
+    return vec;
+}
+
+template <class Element>
 std::set<uint32_t> AdvancedSHEBase<Element>::GenerateIndices_2n(usint batchSize, usint m) const {
     std::set<uint32_t> indices;
     if (batchSize > 1) {

@@ -422,6 +422,18 @@ Ciphertext<Element> CryptoContextImpl<Element>::EvalMerge(
 }
 
 template <typename Element>
+Ciphertext<Element> CryptoContextImpl<Element>::EvalMatrixMult(ConstCiphertext<Element> ciphertext1,
+                                                               ConstCiphertext<Element> ciphertext2,
+                                                               uint numRows1,
+                                                               uint numRows2
+                                                              ) const {
+    ValidateCiphertext(ciphertext1);
+    ValidateCiphertext(ciphertext2);
+
+    return GetScheme()->EvalMatrixMult(ciphertext1, ciphertext2, numRows1, numRows2);
+}
+
+template <typename Element>
 Ciphertext<Element> CryptoContextImpl<Element>::EvalInnerProduct(ConstCiphertext<Element> ct1,
                                                                  ConstCiphertext<Element> ct2, usint batchSize) const {
     ValidateCiphertext(ct1);

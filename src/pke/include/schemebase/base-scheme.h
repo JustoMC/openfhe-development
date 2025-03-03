@@ -1266,6 +1266,18 @@ public:
         return m_AdvancedSHE->EvalMerge(ciphertextVec, evalKeyMap);
     }
 
+    virtual Ciphertext<Element> EvalMatrixMult(ConstCiphertext<Element> ciphertext1,
+                                               ConstCiphertext<Element> ciphertext2,
+                                               uint numRows1 = 0,
+                                               uint numRows2 = 0
+                                              ) const {
+        VerifyAdvancedSHEEnabled(__func__);
+        if (!ciphertext1)
+            OPENFHE_THROW("Input first ciphertext is nullptr");
+        if (!ciphertext2)
+            OPENFHE_THROW("Input second ciphertext is nullptr");
+        return m_AdvancedSHE->EvalMatrixMult(ciphertext1, ciphertext2, numRows1, numRows2);
+    }
     /////////////////////////////////////////
     // MULTIPARTY WRAPPER
     /////////////////////////////////////////

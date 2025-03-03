@@ -341,13 +341,15 @@ public:
    * Function for multiplying two matrices represented as vectors of ciphertexts
    * @param ciphertextVec1 the first matrix represented as a vector of ciphertexts
    * @param ciphertextVec2 the second matrix represented as a vector of ciphertexts
-   * @param numCols the number of columns in the first matrix
+   * @param numRows1 number of rows in the first matrix, if 0, it is sqrt(ciphertextVec1.size())
+   * @param numRows2 number of rows in the second matrix, if 0, it is the number of columns in the first matrix
    * @return the resulting ciphertext
    */
-    virtual Ciphertext<Element> EvalMatrixMult(ConstCiphertext<Element> ciphertextVec1, ConstCiphertext<Element> ciphertextVec2, usint numRows1) const {
-        OPENFHE_THROW("EvalMatrixMult is not implemented for the scheme.");
-    }
-
+    virtual Ciphertext<Element> EvalMatrixMult(ConstCiphertext<Element> ciphertextVec1,
+                                               ConstCiphertext<Element> ciphertextVec2,
+                                               usint numRows1,
+                                               usint numRows2
+                                              ) const;
 protected:
     std::set<uint32_t> GenerateIndices_2n(usint batchSize, usint m) const;
 
