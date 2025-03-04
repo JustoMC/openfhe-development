@@ -41,6 +41,7 @@
 #include "schemebase/base-fhe.h"
 #include "schemebase/base-pke.h"
 #include "schemebase/base-pre.h"
+#include "schemebase/base-matrixshe.h"
 #include "ciphertext.h"
 
 #include "key/keypair.h"
@@ -1276,7 +1277,7 @@ public:
             OPENFHE_THROW("Input first ciphertext is nullptr");
         if (!ciphertext2)
             OPENFHE_THROW("Input second ciphertext is nullptr");
-        return m_AdvancedSHE->EvalMatrixMult(ciphertext1, ciphertext2, numRows1, numRows2);
+        return m_MatrixSHE->EvalMatrixMult(ciphertext1, ciphertext2, numRows1, numRows2);
     }
     /////////////////////////////////////////
     // MULTIPARTY WRAPPER
@@ -1733,6 +1734,7 @@ protected:
     std::shared_ptr<MultipartyBase<Element>> m_Multiparty;
     std::shared_ptr<FHEBase<Element>> m_FHE;
     std::shared_ptr<FHEBase<Element>> m_SchemeSwitch;
+    std::shared_ptr<MatrixSHEBase<Element>> m_MatrixSHE;
 };
 
 }  // namespace lbcrypto

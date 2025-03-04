@@ -57,7 +57,7 @@ namespace lbcrypto {
  * @tparam Element a ring element.
  */
 template <class Element>
-class AdvancedSHEBase {
+class MatrixSHEBase {
     using ParmType = typename Element::Params;
     using IntType  = typename Element::Integer;
     using DugType  = typename Element::DugType;
@@ -65,7 +65,7 @@ class AdvancedSHEBase {
     using TugType  = typename Element::TugType;
 
 public:
-    virtual ~AdvancedSHEBase() {}
+    virtual ~MatrixSHEBase() {}
 
     /**
    * Virtual function for evaluating addition of a list of ciphertexts.
@@ -334,6 +334,22 @@ public:
     // Other Methods for Bootstrap
     //------------------------------------------------------------------------------
 
+    //------------------------------------------------------------------------------
+    // MATRIX MULTIPLICATION
+    //------------------------------------------------------------------------------
+    /**
+   * Function for multiplying two matrices represented as vectors of ciphertexts
+   * @param ciphertextVec1 the first matrix represented as a vector of ciphertexts
+   * @param ciphertextVec2 the second matrix represented as a vector of ciphertexts
+   * @param numRows1 number of rows in the first matrix, if 0, it is sqrt(ciphertextVec1.size())
+   * @param numRows2 number of rows in the second matrix, if 0, it is the number of columns in the first matrix
+   * @return the resulting ciphertext
+   */
+    virtual Ciphertext<Element> EvalMatrixMult(ConstCiphertext<Element> ciphertextVec1,
+                                               ConstCiphertext<Element> ciphertextVec2,
+                                               usint numRows1,
+                                               usint numRows2
+                                              ) const;
 protected:
     std::set<uint32_t> GenerateIndices_2n(usint batchSize, usint m) const;
 
