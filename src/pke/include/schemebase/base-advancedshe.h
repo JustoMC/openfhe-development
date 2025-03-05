@@ -39,6 +39,7 @@
 #include "ciphertext-fwd.h"
 #include "utils/inttypes.h"
 #include "utils/exception.h"
+#include "constants.h"
 
 #include <memory>
 #include <vector>
@@ -333,6 +334,54 @@ public:
     //------------------------------------------------------------------------------
     // Other Methods for Bootstrap
     //------------------------------------------------------------------------------
+
+    //------------------------------------------------------------------------------
+    // Matrix Multiplication
+    //------------------------------------------------------------------------------
+    /**
+     * Generates the evaluation keys for matrix multiplication.
+     * The matrix multiplication is performed on two matrices, the first matrix
+     * is of size rowSize1 x colSize1, and the second matrix is of size rowSize2 x colSize2.
+     * The number of columns in the first matrix must be equal to the number of rows in the second matrix.
+     * The result is a matrix of size rowSize1 x colSize2.
+     * The matrix multiplication can be performed using either the HE matrix multiplication technique or the
+     * Strassen technique.
+     * 
+     * @param privateKey private key.
+     * @param publicKey public key.
+     * @param mmTech matrix multiplication technique.
+     * @param strassen Strassen usage in matrix multiplication.
+     * @param rowSize1 number of rows in the first matrix.
+     * @param colSize2 number of columns in the second matrix.
+     * @param rowcolSize number of columns in the first matrix and number of rows in the second matrix.
+     * @return resulting evaluation keys.
+     */
+    virtual std::shared_ptr<std::map<usint, EvalKey<Element>>> EvalMatrixMultKeyGen(
+        const PrivateKey<Element> privateKey, const PublicKey<Element> publicKey,
+        MatrixMultiplicationTechnique mmTech, StrassenInMatrixMultiplication strassen,
+        usint rowSize1, usint colSize2, usint rowcolSize) const;
+
+    /**
+     * Matrix multiplication of two ciphertexts. The first ciphertext is a matrix
+     * of size numRows1 x numCols1, and the second ciphertext is a matrix of size
+     * numRows2 x numCols2. The number of columns in the first matrix must be equal
+     * to the number of rows in the second matrix. The result is a matrix of size
+     * numRows1 x numCols2.
+     *
+     * @param ciphertext1 first matrix.
+     * @param ciphertext2 second matrix.
+     * @param mmTech matrix multiplication technique.
+     * @param strassen Strassen usage in matrix multiplication.
+     * @param numRows1 number of rows in the first matrix.
+     * @param numRows2 number of rows in the second matrix.
+     * @return resulting ciphertext
+     */
+    virtual Ciphertext<Element> EvalMatrixMult(
+        ConstCiphertext<Element> ciphertext1,
+        ConstCiphertext<Element> ciphertext2,
+        MatrixMultiplicationTechnique mmTech,
+        StrassenInMatrixMultiplication strassen,
+        uint numRows1, uint numRows2) const;
 
 protected:
     std::set<uint32_t> GenerateIndices_2n(usint batchSize, usint m) const;

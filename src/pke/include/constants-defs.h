@@ -146,6 +146,18 @@ enum COMPRESSION_LEVEL {  // TODO (dsuponit): change it to camel case
     SLACK   = 3   // less efficient with weaker security assumption
 };
 
+enum MatrixMultiplicationTechnique {
+    INVALID_MATRIX_MULTIPLICATION_TECHNIQUE = 0,
+    HE_MATRIX_MULTIPLICATION,
+    LESS_MULTIPLICATIONS_MATRIX_MULTIPLICATION
+};
+enum StrassenInMatrixMultiplication {
+    INVALID_STRASSEN_IN_MATRIX_MULTIPLICATION = 0,
+    NONE,
+    IF_NEEDED,
+    ALWAYS
+};
+
 }  // namespace lbcrypto
 
 #endif  // __CONSTANTS_DEFS_H__

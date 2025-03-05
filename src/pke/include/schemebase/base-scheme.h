@@ -41,7 +41,6 @@
 #include "schemebase/base-fhe.h"
 #include "schemebase/base-pke.h"
 #include "schemebase/base-pre.h"
-#include "schemebase/base-matrixshe.h"
 #include "ciphertext.h"
 
 #include "key/keypair.h"
@@ -1267,18 +1266,43 @@ public:
         return m_AdvancedSHE->EvalMerge(ciphertextVec, evalKeyMap);
     }
 
-    virtual Ciphertext<Element> EvalMatrixMult(ConstCiphertext<Element> ciphertext1,
-                                               ConstCiphertext<Element> ciphertext2,
-                                               uint numRows1 = 0,
-                                               uint numRows2 = 0
-                                              ) const {
-        VerifyAdvancedSHEEnabled(__func__);
-        if (!ciphertext1)
-            OPENFHE_THROW("Input first ciphertext is nullptr");
-        if (!ciphertext2)
-            OPENFHE_THROW("Input second ciphertext is nullptr");
-        return m_MatrixSHE->EvalMatrixMult(ciphertext1, ciphertext2, numRows1, numRows2);
+    /////////////////////////////////////////
+    // Matrix Multiplication
+    /////////////////////////////////////////
+    virtual std::shared_ptr<std::map<usint, EvalKey<Element>>> EvalMatrixMultKeyGen(
+            const PrivateKey<Element> privateKey, const PublicKey<Element> publicKey = nullptr,
+            MatrixMultiplicationTechnique mmTech = MatrixMultiplicationTechnique::HE_MATRIX_MULTIPLICATION,
+            StrassenInMatrixMultiplication strassen = StrassenInMatrixMultiplication::NONE,
+            usint rowSize1 = 0, usint colSize2 = 0, usint rowcolSize = 0) const {
+        if (privateKey == nullptr)
+            OPENFHE_THROW("Private key passed to EvalMatrixMultKeyGen is nullptr");
+        if (publicKey != nullptr && privateKey->GetKeyTag() != publicKey->GetKeyTag())
+            OPENFHE_THROW("Public key passed to EvalMatrixMultKeyGen does not match private key");
+        if (mmTech == MatrixMultiplicationTechnique::INVALID_MATRIX_MULTIPLICATION_TECHNIQUE)
+            OPENFHE_THROW("Invalid matrix multiplication technique");
+        if (strassen == StrassenInMatrixMultiplication::INVALID_STRASSEN_IN_MATRIX_MULTIPLICATION)
+            OPENFHE_THROW("Invalid Strassen usage in matrix multiplication");
+        return m_AdvancedSHE->EvalMatrixMultKeyGen(privateKey, publicKey, mmTech, strassen, rowSize1, colSize2, rowcolSize);
     }
+
+    virtual Ciphertext<Element> EvalMatrixMult(
+            ConstCiphertext<Element> ct1,
+            ConstCiphertext<Element> ct2,
+            MatrixMultiplicationTechnique mmTech = MatrixMultiplicationTechnique::HE_MATRIX_MULTIPLICATION,
+            StrassenInMatrixMultiplication strassen = StrassenInMatrixMultiplication::NONE,
+            uint nRows1 = 0, uint nRows2 = 0) const {
+        VerifyAdvancedSHEEnabled(__func__);
+        if (!ct1)
+            OPENFHE_THROW("Input first ciphertext is nullptr");
+        if (!ct2)
+            OPENFHE_THROW("Input second ciphertext is nullptr");
+        if (mmTech == MatrixMultiplicationTechnique::INVALID_MATRIX_MULTIPLICATION_TECHNIQUE)
+            OPENFHE_THROW("Invalid matrix multiplication technique");
+        if (strassen == StrassenInMatrixMultiplication::INVALID_STRASSEN_IN_MATRIX_MULTIPLICATION)
+            OPENFHE_THROW("Invalid Strassen in matrix multiplication technique");
+        return m_AdvancedSHE->EvalMatrixMult(ct1, ct2, mmTech, strassen, nRows1, nRows2);
+    }
+    
     /////////////////////////////////////////
     // MULTIPARTY WRAPPER
     /////////////////////////////////////////
@@ -1709,6 +1733,7 @@ public:
         }
     }
 
+
     friend std::ostream& operator<<(std::ostream& out, const SchemeBase<Element>& s) {
         out << typeid(s).name() << ":";
         out << " ParamsGen " << (s.m_ParamsGen == 0 ? "none" : typeid(*s.m_ParamsGen).name());
@@ -1734,7 +1759,6 @@ protected:
     std::shared_ptr<MultipartyBase<Element>> m_Multiparty;
     std::shared_ptr<FHEBase<Element>> m_FHE;
     std::shared_ptr<FHEBase<Element>> m_SchemeSwitch;
-    std::shared_ptr<MatrixSHEBase<Element>> m_MatrixSHE;
 };
 
 }  // namespace lbcrypto

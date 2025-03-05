@@ -2850,6 +2850,33 @@ public:
    */
     Ciphertext<Element> EvalMerge(const std::vector<Ciphertext<Element>>& ciphertextVec) const;
 
+    //------------------------------------------------------------------------------
+    // Matrix Multiplication
+    //------------------------------------------------------------------------------
+    /**
+     * Generates the evaluation keys for matrix multiplication.
+     * The matrix multiplication is performed on two matrices, the first matrix
+     * is of size rowSize1 x colSize1, and the second matrix is of size rowSize2 x colSize2.
+     * The number of columns in the first matrix must be equal to the number of rows in the second matrix.
+     * The result is a matrix of size rowSize1 x colSize2.
+     * The matrix multiplication can be performed using either the HE matrix multiplication technique or the
+     * Strassen technique.
+     * 
+     * @param privateKey private key.
+     * @param publicKey public key.
+     * @param mmTech matrix multiplication technique.
+     * @param strassen Strassen usage in matrix multiplication.
+     * @param rowSize1 number of rows in the first matrix.
+     * @param colSize2 number of columns in the second matrix.
+     * @param rowcolSize number of columns in the first matrix and number of rows in the second matrix.
+     * @return resulting evaluation keys.
+     */
+    std::shared_ptr<std::map<usint, EvalKey<Element>>> EvalMatrixMultKeyGen(
+        const PrivateKey<Element> privateKey, const PublicKey<Element> publicKey = nullptr,
+        MatrixMultiplicationTechnique mmTech = MatrixMultiplicationTechnique::HE_MATRIX_MULTIPLICATION,
+        StrassenInMatrixMultiplication strassen = StrassenInMatrixMultiplication::NONE,
+        usint rowSize1 = 0, usint colSize2 = 0, usint rowcolSize = 0) const;
+
     /**
      * Matrix multiplication of two ciphertexts. The first ciphertext is a matrix
      * of size numRows1 x numCols1, and the second ciphertext is a matrix of size
@@ -2859,15 +2886,19 @@ public:
      *
      * @param ciphertext1 first matrix.
      * @param ciphertext2 second matrix.
+     * @param mmTech matrix multiplication technique.
+     * @param strassen Strassen usage in matrix multiplication.
      * @param numRows1 number of rows in the first matrix.
      * @param numRows2 number of rows in the second matrix.
      * @return resulting ciphertext
      */
-    Ciphertext<Element> EvalMatrixMult(ConstCiphertext<Element> ciphertext1,
-                                       ConstCiphertext<Element> ciphertext2,
-                                       uint numRows1 = 0,
-                                       uint numRows2 = 0
-                                      ) const;
+    Ciphertext<Element> EvalMatrixMult(
+        ConstCiphertext<Element> ciphertext1,
+        ConstCiphertext<Element> ciphertext2,
+        MatrixMultiplicationTechnique mmTech = MatrixMultiplicationTechnique::HE_MATRIX_MULTIPLICATION,
+        StrassenInMatrixMultiplication strassen = StrassenInMatrixMultiplication::NONE,
+        uint numRows1 = 0, uint numRows2 = 0) const;
+    
     //------------------------------------------------------------------------------
     // PRE Wrapper
     //------------------------------------------------------------------------------
