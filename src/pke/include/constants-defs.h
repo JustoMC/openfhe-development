@@ -155,7 +155,7 @@ enum StrassenInMatrixMultiplication {
     INVALID_STRASSEN_IN_MATRIX_MULTIPLICATION = 0,
     NONE,
     IF_NEEDED,
-    ALWAYS
+    ALL
 };
 
 }  // namespace lbcrypto

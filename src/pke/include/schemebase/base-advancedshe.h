@@ -354,9 +354,8 @@ public:
      * @param rowSize1 number of rows in the first matrix.
      * @param colSize2 number of columns in the second matrix.
      * @param rowcolSize number of columns in the first matrix and number of rows in the second matrix.
-     * @return resulting evaluation keys.
      */
-    virtual std::shared_ptr<std::map<usint, EvalKey<Element>>> EvalMatrixMultKeyGen(
+    virtual void EvalMatrixMultKeyGen(
         const PrivateKey<Element> privateKey, const PublicKey<Element> publicKey,
         MatrixMultiplicationTechnique mmTech, StrassenInMatrixMultiplication strassen,
         usint rowSize1, usint colSize2, usint rowcolSize) const;

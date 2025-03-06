@@ -422,7 +422,7 @@ Ciphertext<Element> CryptoContextImpl<Element>::EvalMerge(
 }
 
 template <typename Element>
-std::shared_ptr<std::map<usint, EvalKey<Element>>> CryptoContextImpl<Element>::EvalMatrixMultKeyGen(
+void CryptoContextImpl<Element>::EvalMatrixMultKeyGen(
         const PrivateKey<Element> privateKey, const PublicKey<Element> publicKey,
         MatrixMultiplicationTechnique mmTech,
         StrassenInMatrixMultiplication strassen,

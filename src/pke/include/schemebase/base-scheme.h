@@ -1269,7 +1269,7 @@ public:
     /////////////////////////////////////////
     // Matrix Multiplication
     /////////////////////////////////////////
-    virtual std::shared_ptr<std::map<usint, EvalKey<Element>>> EvalMatrixMultKeyGen(
+    virtual void EvalMatrixMultKeyGen(
             const PrivateKey<Element> privateKey, const PublicKey<Element> publicKey = nullptr,
             MatrixMultiplicationTechnique mmTech = MatrixMultiplicationTechnique::HE_MATRIX_MULTIPLICATION,
             StrassenInMatrixMultiplication strassen = StrassenInMatrixMultiplication::NONE,
@@ -1282,7 +1282,7 @@ public:
             OPENFHE_THROW("Invalid matrix multiplication technique");
         if (strassen == StrassenInMatrixMultiplication::INVALID_STRASSEN_IN_MATRIX_MULTIPLICATION)
             OPENFHE_THROW("Invalid Strassen usage in matrix multiplication");
-        return m_AdvancedSHE->EvalMatrixMultKeyGen(privateKey, publicKey, mmTech, strassen, rowSize1, colSize2, rowcolSize);
+        m_AdvancedSHE->EvalMatrixMultKeyGen(privateKey, publicKey, mmTech, strassen, rowSize1, colSize2, rowcolSize);
     }
 
     virtual Ciphertext<Element> EvalMatrixMult(

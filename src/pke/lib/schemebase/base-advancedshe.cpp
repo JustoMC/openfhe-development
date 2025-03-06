@@ -566,6 +566,271 @@ Ciphertext<Element> AdvancedSHEBase<Element>::EvalSum2nComplexCols(
     return newCiphertext;
 }
 
+//------------------------------------------------------------------------------
+// MATRIX MULTIPLICATION
+//------------------------------------------------------------------------------
+#define reduceRotation true
+#define reduceRotationNegative true
+
+int RotationQuadrantStrassen(usint quadrantOrig, usint quadrantDest, usint ladoOriginal, usint lvlStrassen=0) {
+    if (quadrantOrig == quadrantDest) {
+        return 0;
+    } else {
+        usint quadMin = std::min(quadrantOrig, quadrantDest),
+              quadMax = std::max(quadrantOrig, quadrantDest),
+              ret=ladoOriginal/(1<<(lvlStrassen+1));
+        switch (quadMin^quadMax) {
+            case 2:
+                ret*=ladoOriginal;
+                break;
+            case 3:
+                ret*=ladoOriginal+(quadMin==1 ? -1 : 1);
+                break;
+        }
+        if (quadrantDest<=quadrantOrig)
+            ret = -ret;
+        return ret;
+    }
+}
+
+std::set<int> RotationsHEMatrixMultiplication(usint ladoOriginal, usint lvlStrassen=0) {
+    int lado = (ladoOriginal/(1 << lvlStrassen));
+    std::set<int> ret;
+    // return list(range(-d2+1, 0))+list(range(1, d2))+list(map(lambda x: x*d2, range(1, d2)))
+    return {};
+}
+
+std::set<int> RotationsLessMatrixMultiplication(usint ladoOriginal, usint lvlStrassen=0) {
+    // return sum([[-((i*d2)%lado_HEMM+((i*d2)//lado_HEMM)*lado_HEMM*d2-i),-((i*d2)%lado_HEMM+((i*d2)//lado_HEMM)*lado_HEMM*d2-i*lado_HEMM)] for i in range(1, d2)], []) + \
+            sum([[-(2**i), -(2**i*lado_HEMM), lado_HEMM**(i//int(math.log2(lado_HEMM/d2)))*(i%int(math.log2(lado_HEMM/d2))+1)*d2] for i in range(int(math.log2(d2)))], [])
+    return {};
+}
+
+std::set<int> RotationsStrassen(usint ladoOriginal, usint tamMax=1,
+        MatrixMultiplicationTechnique mmTech=MatrixMultiplicationTechnique::INVALID_MATRIX_MULTIPLICATION_TECHNIQUE,
+        usint lvlStrassen=0) {
+    if (ladoOriginal/(1 << lvlStrassen) <= tamMax) {
+        if (tamMax == 1) {
+            return {};
+        } else {
+            switch (mmTech) {
+                case MatrixMultiplicationTechnique::HE_MATRIX_MULTIPLICATION:
+                    return RotationsHEMatrixMultiplication(ladoOriginal, lvlStrassen);
+                case MatrixMultiplicationTechnique::LESS_MULTIPLICATIONS_MATRIX_MULTIPLICATION:
+                    return RotationsLessMatrixMultiplication(ladoOriginal, lvlStrassen);
+                default:
+                    OPENFHE_THROW("Invalid MatrixMultiplicationTechnique");
+            }
+        }
+    } else {
+        std::set<int> ret = {
+            RotationQuadrantStrassen(1, 0, ladoOriginal, lvlStrassen),
+            RotationQuadrantStrassen(2, 0, ladoOriginal, lvlStrassen),
+            RotationQuadrantStrassen(3, 0, ladoOriginal, lvlStrassen),
+            RotationQuadrantStrassen(0, 1, ladoOriginal, lvlStrassen),
+            RotationQuadrantStrassen(0, 2, ladoOriginal, lvlStrassen),
+            RotationQuadrantStrassen(0, 3, ladoOriginal, lvlStrassen),
+        };
+        for (int i : RotationsStrassen(ladoOriginal, tamMax+1))
+            ret.insert(i);
+        return ret;
+    }
+}
+
+std::set<int> RotationsReduce(std::set<int> rotations, usint slots) {
+    std::set<int> ret;
+    int tam = (int)ceil(log2(slots));
+    for (int rot : rotations) {
+        rot = rot % slots;
+        if (rot!=0) {
+            int r=0;
+#if reduceRotationNegative
+            for (int i=0; i<tam; i++)
+                if (rot & (1 << i))
+                    r++;
+            if (r > tam/2)
+                rot = rot-slots;
+#endif
+            for (int i=0; i<tam; i++)
+                ret.insert((1 << i));
+        }
+    }
+    return ret;
+}
+
+template <class Element>
+void AdvancedSHEBase<Element>::EvalMatrixMultKeyGen(
+        const PrivateKey<Element> privateKey, const PublicKey<Element> publicKey,
+        MatrixMultiplicationTechnique mmTech, StrassenInMatrixMultiplication strassen,
+        usint rowSize1, usint colSize2, usint rowcolSize) const {
+    auto cc = privateKey->GetCryptoContext();
+    auto batchSize = cc->GetEncodingParams()->GetBatchSize();
+    if (rowSize1 == 0 && colSize2 == 0 && rowcolSize == 0) {
+        if (sqrt(batchSize) != floor(sqrt(batchSize)))
+            OPENFHE_THROW("the dimensions of the matrices must be specified");
+        rowSize1 = colSize2 = rowcolSize = (uint)sqrt(batchSize);
+    } else if (rowSize1 == 0 || colSize2 == 0 || rowcolSize == 0) {
+        OPENFHE_THROW("the dimensions of the matrices must be specified");
+    } else if (strassen != StrassenInMatrixMultiplication::NONE && !(rowSize1 == colSize2 && rowSize1 == rowcolSize) && log2(rowSize1) != floor(log2(rowSize1))) {
+        OPENFHE_THROW("the matrices must be square and with sides power of 2 for Strassen's algorithm");
+    }
+    if (rowcolSize != 1 || !(rowSize1 == 1 || colSize2 == 1)) {
+        usint slots = rowcolSize*rowcolSize;
+        if (slots > cc->GetRingDimension()/2)
+            OPENFHE_THROW("the resulting matrix is too large to be encoded in this context");
+        std::set<int> rotations;
+        switch (strassen) {
+            case StrassenInMatrixMultiplication::NONE:
+                rotations = {};
+                break;
+            case StrassenInMatrixMultiplication::IF_NEEDED:
+                rotations = {};
+                break;
+            case StrassenInMatrixMultiplication::ALL:
+                rotations = RotationsStrassen(rowSize1);
+                break;
+            default:
+                OPENFHE_THROW("Invalid StrassenInMatrixMultiplication");
+        }
+        printf("rotations: ");
+        for (int r : rotations)
+            printf("%d, ", r);
+#if reduceRotation
+        rotations = RotationsReduce(rotations, slots);
+#endif
+        sdt::vector<int> rots(rotations.begin(), rotations.end());
+        printf("rots: ");
+        for (int r : rots)
+            printf("%d, ", r);
+        cc->EvalRotateKeyGen(privateKey, rots);
+    }
+}
+
+template <class Element>
+Ciphertext<Element> AdvancedSHEBase<Element>::EvalMatrixMult(ConstCiphertext<Element> ct1, ConstCiphertext<Element> ct2,
+                                                             MatrixMultiplicationTechnique mmTech,
+                                                             StrassenInMatrixMultiplication strassen,
+                                                             usint nRows1, usint nRows2 ) const {
+    if (ct1->GetSlots() == 0 || ct2->GetSlots() == 0) {
+        OPENFHE_THROW("the vectors of ciphertexts to be multiplied cannot be empty");
+    }
+    usint nCols1, nCols2;
+    if (nRows1 == 0) {
+        if (sqrt(ct1->GetSlots()) != floor(sqrt(ct1->GetSlots()))) {
+            OPENFHE_THROW("the number of rows of the first matrix must be specified");
+        }
+        nRows1 = uint(sqrt(ct1->GetSlots()));
+        nCols1 = nRows1;
+    } else if (ct1->GetSlots()%nRows1 != 0) {
+        OPENFHE_THROW("the number of columns of the first matrix must be a unsigned integer, this be calculated by the number of elements in the vector divided by the number of rows");
+    } else {
+        nCols1 = uint(ct1->GetSlots()/nRows1);
+    }
+    if (nRows2 == 0) {
+        nRows2 = nCols1;
+    }
+    if (ct2->GetSlots()%nRows2 != 0) {
+        OPENFHE_THROW("the number of columns of the second matrix must be a unsigned integer, this be calculated by the number of elements in the vector divided by the number of rows.");
+    } else {
+        nCols2 = uint(ct2->GetSlots()/nRows2);
+    }
+    auto cc = ct1->GetCryptoContext();
+    if (ct1->GetSlots() == 1 || ct2->GetSlots() == 1) {
+        return cc->EvalMult(ct1, ct2);
+    } else {
+        if (nCols1 != nRows2) {
+        OPENFHE_THROW("the number of columns of the first matrix must be equal to the number of rows of the second matrix");
+        }
+        if (nRows1*nCols2 > ct1->GetCryptoContext()->GetRingDimension()/2) {
+            OPENFHE_THROW("the resulting matrix is too large to be encoded in this context");
+        }
+
+        // SOLO MATRICES CUADRADAS
+        if (nRows1 != nCols1 || nRows2 != nCols2)
+            OPENFHE_THROW("the matrices must be square (por ahora)");
+        // SOLO MATRICES CON LADO POTENCIA DE 2
+        if (pow(2, floor(log2(nRows1))) != nRows1)
+            OPENFHE_THROW("Number of sides must be a power of 2");
+        //return nullptr;
+        return HEMatMult(ct1->Clone(), ct2->Clone(), nRows1);
+    }
+}
+
+template <class Element>
+Ciphertext<Element> HEMatMult(Ciphertext<Element> ct1,
+                              Ciphertext<Element> ct2,
+                              int d
+                              ) {
+    auto cc = ct1->GetCryptoContext();
+    uint n = d*d;
+    // Step 1-1 ctA0
+    std::vector<Ciphertext<Element>> v_ctA0 = std::vector<Ciphertext<Element>>(2*d-1),
+                                     v_ctB0 = std::vector<Ciphertext<Element>>(d),
+                                     v_ctAB = std::vector<Ciphertext<Element>>(d);
+#pragma omp parallel for num_threads(OpenFHEParallelControls.GetThreadLimit(2*d-1))
+    for (int k=-d+1; k<d; k++)
+        v_ctA0[k+d-1]=EvalMultVect(EvalRotateOpt(ct1, k), vec_from_pred(n, [d, k](int ell){return (k>=0) ? ((unsigned)(ell-d*k) < (d-k)) : ((unsigned)(ell-(d+k)*d+k) < (d+k));}));
+    Ciphertext<Element> ctA0 = cc->EvalAddMany(v_ctA0);
+    // Step 1-2 ctB0
+#pragma omp parallel for num_threads(OpenFHEParallelControls.GetThreadLimit(d))
+    for (int k=0; k<d; k++)
+        v_ctB0[k]=EvalMultVect(EvalRotateOpt(ct2, k*d), vec_from_pred(n, [d, k](int ell){return ell%d == k;}));
+    Ciphertext<Element> ctB0 = cc->EvalAddMany(v_ctB0);
+    // Step 2
+    v_ctAB[0] = cc->EvalMult(ctA0, ctB0);
+#pragma omp parallel for num_threads(OpenFHEParallelControls.GetThreadLimit(d-1))
+    for (int k=1; k<d; k++)
+        v_ctAB[k] = cc->EvalMult(cc->EvalAdd(EvalMultVect(EvalRotateOpt(ctA0, k), vec_from_pred(n, [d, k](int ell){return (unsigned)(ell%d) < d-k;})),
+                                             EvalMultVect(EvalRotateOpt(ctA0, k-d), vec_from_pred(n, [d, k](int ell){return (unsigned)(ell%d-d+k) < k;}))),
+                                 EvalRotateOpt(ctB0, d*k));
+    return cc->EvalAddMany(v_ctAB);
+}
+
+template <class Element>
+Ciphertext<Element> EvalRotateOpt(Ciphertext<Element> ct, int d) {
+#if reduceRotation
+    d = d % ct->GetSlots();
+    if (d == 0) {
+        return ct;
+    } else {
+#if reduceRotationNegative
+        int tam = (int)ceil(log2(ct->GetSlots())), r=0;
+        for (int i=0; i<tam; i++)
+            if (d & (1 << i)) {
+                r++;
+            }
+        if (r > tam/2)
+            d = d-ct->GetSlots();
+#endif
+        auto cc = ct->GetCryptoContext();
+        for (int i=0; i<tam; i++)
+            if (d & (1 << i))
+                ct = cc->EvalRotate(ct, 1 << i);
+        return ct;
+    }
+#else
+    return ct->GetCryptoContext()->EvalRotate(ct, d);
+#endif
+}
+
+
+template <class Element>
+Ciphertext<Element> EvalMultVect(Ciphertext<Element> ct, std::vector<double> v) {
+    auto cc = ct->GetCryptoContext();
+    return cc->EvalMult(ct, cc->MakeCKKSPackedPlaintext(v));
+}
+
+std::vector<double> vec_from_pred(uint n, std::function<bool(uint)> pred) {
+    std::vector<double> vec = std::vector<double>(n, 0);
+#pragma omp parallel for num_threads(OpenFHEParallelControls.GetThreadLimit(n))
+    for (uint i = 0; i < n; i++)
+        if (pred(i))
+            vec[i] = 1;
+    return vec;
+}
+
+
+
 }  // namespace lbcrypto
 
 // the code below is from base-advancedshe-impl.cpp
