@@ -350,15 +350,15 @@ public:
      * @param privateKey private key.
      * @param publicKey public key.
      * @param mmTech matrix multiplication technique.
-     * @param strassen Strassen usage in matrix multiplication.
+     * @param strassenAtSize Strassen used at matrix size are equal to or less than this value, if 0 then Strassen is not used if not is necessary.
      * @param rowSize1 number of rows in the first matrix.
      * @param colSize2 number of columns in the second matrix.
      * @param rowcolSize number of columns in the first matrix and number of rows in the second matrix.
      */
     virtual void EvalMatrixMultKeyGen(
-        const PrivateKey<Element> privateKey, const PublicKey<Element> publicKey,
-        MatrixMultiplicationTechnique mmTech, StrassenInMatrixMultiplication strassen,
-        usint rowSize1, usint colSize2, usint rowcolSize) const;
+        const PrivateKey<Element> privateKey, const PublicKey<Element> publicKey=nullptr,
+        MatrixMultiplicationTechnique mmTech=MatrixMultiplicationTechnique::INVALID_MATRIX_MULTIPLICATION_TECHNIQUE,
+        usint strassenAtSize=0, usint rowSize1=0, usint colSize2=0, usint rowcolSize=0) const;
 
     /**
      * Matrix multiplication of two ciphertexts. The first ciphertext is a matrix
@@ -370,7 +370,7 @@ public:
      * @param ciphertext1 first matrix.
      * @param ciphertext2 second matrix.
      * @param mmTech matrix multiplication technique.
-     * @param strassen Strassen usage in matrix multiplication.
+     * @param strassenAtSize Strassen used at matrix size are equal to or less than this value, if 0 then Strassen is not used if not is necessary.
      * @param numRows1 number of rows in the first matrix.
      * @param numRows2 number of rows in the second matrix.
      * @return resulting ciphertext
@@ -379,8 +379,8 @@ public:
         ConstCiphertext<Element> ciphertext1,
         ConstCiphertext<Element> ciphertext2,
         MatrixMultiplicationTechnique mmTech,
-        StrassenInMatrixMultiplication strassen,
-        uint numRows1, uint numRows2) const;
+        usint strassenAtSize,
+        usint numRows1, usint numRows2) const;
 
 protected:
     std::set<uint32_t> GenerateIndices_2n(usint batchSize, usint m) const;

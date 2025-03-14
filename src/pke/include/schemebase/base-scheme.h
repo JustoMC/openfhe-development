@@ -1270,27 +1270,24 @@ public:
     // Matrix Multiplication
     /////////////////////////////////////////
     virtual void EvalMatrixMultKeyGen(
-            const PrivateKey<Element> privateKey, const PublicKey<Element> publicKey = nullptr,
-            MatrixMultiplicationTechnique mmTech = MatrixMultiplicationTechnique::HE_MATRIX_MULTIPLICATION,
-            StrassenInMatrixMultiplication strassen = StrassenInMatrixMultiplication::NONE,
-            usint rowSize1 = 0, usint colSize2 = 0, usint rowcolSize = 0) const {
-        if (privateKey == nullptr)
+            const PrivateKey<Element> privateKey, const PublicKey<Element> publicKey=nullptr,
+            MatrixMultiplicationTechnique mmTech=MatrixMultiplicationTechnique::INVALID_MATRIX_MULTIPLICATION_TECHNIQUE,
+            usint strassenAtSize=0, usint rowSize1=0, usint colSize2=0, usint rowcolSize=0) const {
+        if (privateKey==nullptr)
             OPENFHE_THROW("Private key passed to EvalMatrixMultKeyGen is nullptr");
-        if (publicKey != nullptr && privateKey->GetKeyTag() != publicKey->GetKeyTag())
+        if (publicKey!=nullptr && privateKey->GetKeyTag() != publicKey->GetKeyTag())
             OPENFHE_THROW("Public key passed to EvalMatrixMultKeyGen does not match private key");
-        if (mmTech == MatrixMultiplicationTechnique::INVALID_MATRIX_MULTIPLICATION_TECHNIQUE)
+        if (mmTech==0)
             OPENFHE_THROW("Invalid matrix multiplication technique");
-        if (strassen == StrassenInMatrixMultiplication::INVALID_STRASSEN_IN_MATRIX_MULTIPLICATION)
-            OPENFHE_THROW("Invalid Strassen usage in matrix multiplication");
-        m_AdvancedSHE->EvalMatrixMultKeyGen(privateKey, publicKey, mmTech, strassen, rowSize1, colSize2, rowcolSize);
+        m_AdvancedSHE->EvalMatrixMultKeyGen(privateKey, publicKey, mmTech, strassenAtSize, rowSize1, colSize2, rowcolSize);
     }
 
     virtual Ciphertext<Element> EvalMatrixMult(
             ConstCiphertext<Element> ct1,
             ConstCiphertext<Element> ct2,
             MatrixMultiplicationTechnique mmTech = MatrixMultiplicationTechnique::HE_MATRIX_MULTIPLICATION,
-            StrassenInMatrixMultiplication strassen = StrassenInMatrixMultiplication::NONE,
-            uint nRows1 = 0, uint nRows2 = 0) const {
+            usint strassenAtSize = 0,
+            usint nRows1 = 0, usint nRows2 = 0) const {
         VerifyAdvancedSHEEnabled(__func__);
         if (!ct1)
             OPENFHE_THROW("Input first ciphertext is nullptr");
@@ -1298,9 +1295,7 @@ public:
             OPENFHE_THROW("Input second ciphertext is nullptr");
         if (mmTech == MatrixMultiplicationTechnique::INVALID_MATRIX_MULTIPLICATION_TECHNIQUE)
             OPENFHE_THROW("Invalid matrix multiplication technique");
-        if (strassen == StrassenInMatrixMultiplication::INVALID_STRASSEN_IN_MATRIX_MULTIPLICATION)
-            OPENFHE_THROW("Invalid Strassen in matrix multiplication technique");
-        return m_AdvancedSHE->EvalMatrixMult(ct1, ct2, mmTech, strassen, nRows1, nRows2);
+        return m_AdvancedSHE->EvalMatrixMult(ct1, ct2, mmTech, strassenAtSize, nRows1, nRows2);
     }
     
     /////////////////////////////////////////

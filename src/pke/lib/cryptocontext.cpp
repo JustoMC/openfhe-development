@@ -425,16 +425,14 @@ template <typename Element>
 void CryptoContextImpl<Element>::EvalMatrixMultKeyGen(
         const PrivateKey<Element> privateKey, const PublicKey<Element> publicKey,
         MatrixMultiplicationTechnique mmTech,
-        StrassenInMatrixMultiplication strassen,
+        usint strassenAtSize,
         usint rowSize1, usint colSize2, usint rowcolSize) const {
     ValidateKey(privateKey);
     if (publicKey != nullptr && privateKey->GetKeyTag() != publicKey->GetKeyTag())
         OPENFHE_THROW("Public key passed to EvalMatrixMultKeyGen does not match private key");
     if (mmTech == MatrixMultiplicationTechnique::INVALID_MATRIX_MULTIPLICATION_TECHNIQUE)
         OPENFHE_THROW("Invalid matrix multiplication technique");
-    if (strassen == StrassenInMatrixMultiplication::INVALID_STRASSEN_IN_MATRIX_MULTIPLICATION)
-        OPENFHE_THROW("Invalid Strassen usage in matrix multiplication");
-    return GetScheme()->EvalMatrixMultKeyGen(privateKey, publicKey, mmTech, strassen, rowSize1, colSize2, rowcolSize);
+    return GetScheme()->EvalMatrixMultKeyGen(privateKey, publicKey, mmTech, strassenAtSize, rowSize1, colSize2, rowcolSize);
 }
 
 template <typename Element>
@@ -442,16 +440,13 @@ Ciphertext<Element> CryptoContextImpl<Element>::EvalMatrixMult(
         ConstCiphertext<Element> ct1,
         ConstCiphertext<Element> ct2,
         MatrixMultiplicationTechnique mmTech,
-        StrassenInMatrixMultiplication strassen,
-        uint nRows1, uint nRows2) const {
+        usint strassenAtSize,
+        usint nRows1, usint nRows2) const {
     ValidateCiphertext(ct1);
     ValidateCiphertext(ct2);
     if (mmTech == MatrixMultiplicationTechnique::INVALID_MATRIX_MULTIPLICATION_TECHNIQUE)
         OPENFHE_THROW("Invalid matrix multiplication technique");
-    if (strassen == StrassenInMatrixMultiplication::INVALID_STRASSEN_IN_MATRIX_MULTIPLICATION)
-        OPENFHE_THROW("Invalid Strassen usage in matrix multiplication");
-
-    return GetScheme()->EvalMatrixMult(ct1, ct2, mmTech, strassen, nRows1, nRows2);
+    return GetScheme()->EvalMatrixMult(ct1, ct2, mmTech, strassenAtSize, nRows1, nRows2);
 }
 
 template <typename Element>

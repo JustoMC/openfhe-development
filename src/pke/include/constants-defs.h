@@ -151,12 +151,6 @@ enum MatrixMultiplicationTechnique {
     HE_MATRIX_MULTIPLICATION,
     LESS_MULTIPLICATIONS_MATRIX_MULTIPLICATION
 };
-enum StrassenInMatrixMultiplication {
-    INVALID_STRASSEN_IN_MATRIX_MULTIPLICATION = 0,
-    NONE,
-    IF_NEEDED,
-    ALL
-};
 
 }  // namespace lbcrypto
 
